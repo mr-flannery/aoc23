@@ -1,5 +1,5 @@
 import { readInputFile } from "./util"
-import _ from 'lodash';
+import _, { sum } from 'lodash';
 
 async function parseMatrix() {
   const input = await readInputFile(3);
@@ -76,47 +76,11 @@ async function part1() {
     for(const [x, y] of allNeighbors) {
       const n = matrix[x][y]
       if (matrix[x][y] !== '.' && isNaN(parseInt(matrix[x][y], 10))) {
-        // const partNumber = parseInt(number.map(([x,y]) => matrix[x][y]).join(''))
-        // console.log(`Adding partNumber ${partNumber}, starting at ${number[0]}`)
         partNumbers.push(number)
-
-        // const cords = []
-        // for(const [x, y] of [...number, ...allNeighbors]) {
-        //   const duplicates = cords.filter(([x1, y1]) => x === x1 && y === y1)
-        //   if (!duplicates.length) {
-        //     cords.push([x, y])
-        //   }
-        // }
-
-        // const blerg = _.groupBy(cords.sort(), ([x, y]) => x)
-        // const blarg = Object.values(blerg).map(row => row.map(([x,y]) => matrix[x][y]).join(''))
-        // blarg.forEach(s => console.log(s))
-        // console.log('')
         break;
       }
     }
   }
-
-  // const discardedNumbers = numbers.filter(number => !partNumbers.includes(number))
-  // discardedNumbers.forEach(number => {
-  //   const partNumber = parseInt(number.map(([x,y]) => matrix[x][y]).join(''))
-    
-  //   const allNeighbors = []
-  //   for (const [x, y] of number) {
-  //     allNeighbors.push(...getNeighbors(x, y, matrix));
-  //   }
-
-  //   const cords = []
-  //   for(const [x, y] of [...number, ...allNeighbors]) {
-  //     const duplicates = cords.filter(([x1, y1]) => x === x1 && y === y1)
-  //     if (!duplicates.length) {
-  //       cords.push([x, y])
-  //     }
-  //   }
-    // const blerg = _.groupBy(cords.sort(), ([x, y]) => x)
-    // Object.values(blerg).map(row => row.map(([x,y]) => matrix[x][y]).join('')).forEach(s => console.log(s))
-    // console.log('')
-  // })
 
   const result = 
     partNumbers.map(number => parseInt(number.map(([x,y]) => matrix[x][y]).join('')))
@@ -124,12 +88,89 @@ async function part1() {
   console.log(result)
 }
 
+class Point {
+  constructor(public x: number, public y: number) {}
+
+  equals(point: Point) {
+    return this.x === point.x && this.y === point.y;
+  }
+}
+
 async function part2() {
   const matrix = await parseMatrix();
 
-  const result = 0
-  console.log(result)
+  const numbers = []
+
+  for (let x = 0; x < matrix.length; x++) {
+
+    let state: '.' | 'number' = '.'
+    let number = []
+    
+    for (let y = 0; y < matrix[x].length; y++) {
+      const n =  matrix[x][y]
+      if (state === '.' && isNaN(parseInt(matrix[x][y], 10))) {
+        continue;
+      } else if (state === 'number' && isNaN(parseInt(matrix[x][y], 10))) {
+        state = '.'
+        numbers.push(number)
+        number = []
+      } else if (!isNaN(parseInt(matrix[x][y], 10))) {
+        if (state === '.') {
+          state = 'number'
+        }
+        number.push(new Point(x,y))
+      }
+    }
+    if (number.length) {
+      numbers.push(number)
+    }
+
+  }
+
+  const gears = []
+  for (let x = 0; x < matrix.length; x++) {
+    for (let y = 0; y < matrix[x].length; y++) {
+      if (matrix[x][y] === '*') {
+        gears.push([x, y])
+      }
+    }
+  }
+
+  let sumOfGearRatios = 0
+  for (const [x,y] of gears) {
+    const neighbors = getNeighbors(x, y, matrix).map(([x,y]) => new Point(x, y))
+    
+    const intersectingNumbers = []
+
+    for (const number of numbers) {
+      for (const point of number) {
+        for (const neighbor of neighbors) {
+          if (point.equals(neighbor)) {
+            intersectingNumbers.push(number)
+          }
+        }
+      }
+    }
+
+    const deduplicatedIntersectingNumbers = []
+    const jsons: string[] = []
+
+    for (const n of intersectingNumbers) {
+      const json = JSON.stringify(n)
+      if (!jsons.includes(json)) {
+        jsons.push(json)
+        deduplicatedIntersectingNumbers.push(n)
+      }
+    }
+
+    if (deduplicatedIntersectingNumbers.length === 2) {
+      const [f1,f2] = deduplicatedIntersectingNumbers.map(number => parseInt(number.map(({x,y}) => matrix[x][y]).join('')))
+      sumOfGearRatios += f1 * f2
+    }
+  }
+
+  console.log(sumOfGearRatios)
 } 
 
-part1();
-// part2();
+// part1();
+part2();
