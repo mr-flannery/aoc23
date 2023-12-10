@@ -197,8 +197,41 @@ async function part2() {
   // fuck me
   matrix[120][110] = '|'
   const blerg = distinctInnerAreas.filter(area => {
+    for (const [r,c] of area) {
+      const upperLoopPipes = _.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '-')
+      const upperLoopPipes2 = Array.from(_.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/-|[LJ7F]\|*[LJ7F]/g))
+      if (upperLoopPipes.length && upperLoopPipes.length % 2 === 1) {
+        return true
+      }
+
+      const lowerLoopPipes = _.range(r + 1, matrix.length).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '-')
+      const lowerLoopPipes2 = Array.from(_.range(r + 1, matrix.length).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/-|[LJ7F]\|*[LJ7F]/g))
+      if (lowerLoopPipes.length && lowerLoopPipes.length % 2 === 1) {
+        return true
+      }
+
+      const leftLoopPipes = _.range(0, c).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '|')
+      const leftLoopPipes2 = Array.from(_.range(0, c).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/\||[LJ7F]-*[LJ7F]/g))
+      if (leftLoopPipes.length && leftLoopPipes.length % 2 === 1) {
+        return true
+      }
+
+      const rightLoopPipes = _.range(c + 1, matrix.length).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '|')
+      const rightLoopPipes2 = Array.from(_.range(c + 1, matrix.length).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/\||[LJ7F]-*[LJ7F]/g))
+      if (rightLoopPipes.length && rightLoopPipes.length % 2 === 1) {
+        return true
+      }
+      // return !(upperLoopPipes2.length % 2 === 0 && lowerLoopPipes2.length % 2 === 0 && leftLoopPipes2.length % 2 === 0 && rightLoopPipes2.length % 2 === 0)
+    }
+
+    return false;
+
     // const [r,c] = area[0];
   
+    // const blarg =_.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c])
+
+    // return Array.from(blarg.reverse().join('').matchAll(/-|[LJ]\|*[7F]/g)).length % 2 !== 0
+
     // const upperLoopPipes = _.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '|')
     // const lowerLoopPipes = _.range(r + 1, matrix.length).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '|')
     // const leftLoopPipes = _.range(0, c).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '-')
@@ -235,10 +268,10 @@ async function part2() {
     //   includes(loop!, [maxcr, maxcc + 1]) && includes(loop!, [maxcr, maxcc + 2])
     // )
 
-    const outerNeighbors = distinct(area.flatMap(n => getNeighbors(n, matrix))).filter(n => !includes(area, n))
-    const newInner = [...area, ...outerNeighbors]
-    const outerNeighbors2 = distinct(newInner.flatMap(n => getNeighbors(n, matrix))).filter(n => !includes(newInner, n))
-    return !(outerNeighbors2.every(n => includes(loop, n)) && outerNeighbors.every(n => includes(loop, n)))
+    // const outerNeighbors = distinct(area.flatMap(n => getNeighbors(n, matrix))).filter(n => !includes(area, n))
+    // const newInner = [...area, ...outerNeighbors]
+    // const outerNeighbors2 = distinct(newInner.flatMap(n => getNeighbors(n, matrix))).filter(n => !includes(newInner, n))
+    // return !(outerNeighbors2.every(n => includes(loop, n)) && outerNeighbors.every(n => includes(loop, n)))
   })
   console.log(blerg.flatMap(a=>a).length)
 }
