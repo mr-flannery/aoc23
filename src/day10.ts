@@ -1,6 +1,7 @@
 import { writeFile } from "fs/promises";
 import { readInputFile } from "./util"
 import _, { forEach, runInContext, xor } from "lodash";
+import { on } from "events";
 
 function getConnectingNeighbors(point: [number, number], matrix: string[][]): [number, number][] {
   const [row, col] = point;
@@ -169,111 +170,61 @@ async function part2() {
     }
   }
 
-  const allCoords: [number, number][] = _.range(0, 140).flatMap(x => _.range(0, 140).map(y => [x, y])) as [number, number][]
-  
-  // print matrix with loop
-  // const matrixWithLoop = _.cloneDeep(matrix)
-  // allCoords.forEach(([x,y]) => {
-  //   if (includes(loop!, [x,y])) {
-  //     matrixWithLoop[x][y] = 'X'
-  //   }
-  // })
-  // await writeFile('day10-with-loop.txt', matrixWithLoop.map(row => row.join('')).join('\n'))
+  matrix[120][110] = '|'
+  // const allCoords: [number, number][] = _.range(0, 140).flatMap(x => _.range(0, 140).map(y => [x, y])) as [number, number][]
 
-  // let's h
-  const outerArea = floodFill([0, 0], matrix, loop!)
+  matrix.forEach((row, x) => {
+    row.forEach((col, y) => {
+      if (!includes(loop!, [x, y])) {
+        matrix[x][y] = '.'
+      }
+    })
+  })
 
-  const innerArea = allCoords.filter(n => !includes(outerArea, n) && !includes(loop, n))
-
-  let innerAreaCopy = _.cloneDeep(innerArea)
-  // assumption: non-loop-enclosed inner areas are innerAreas where both outer neighbor rings are part of the loop
-  const distinctInnerAreas = []
-  while (!(distinctInnerAreas.map(a => a.length).reduce((a, b) => a + b, 0) === innerArea.length)) {
-    const area = floodFill(innerAreaCopy[0], matrix, loop!)
-    distinctInnerAreas.push(area)
-    innerAreaCopy = innerAreaCopy.filter(n => !includes(area, n))
+  let insideFields = 0;
+  for (let row = 0; row < matrix.length; row++) {
+    let inside = false;
+    let onPipe = false;
+    
+    for (let col = 0; col < matrix.length; col++) {
+      const field = matrix[row][col];
+      process.stdout.write(field)
+      if (field === '.') {
+        if (inside) {
+          insideFields++;
+        }
+      } else if (field === '|') {
+        inside = !inside;
+      } else if (!onPipe) {
+         if (field === 'F') {
+          // inside = !inside;
+          onPipe = true;
+         } else if (field === 'J') {
+          inside = !inside;
+         } else if (field === '7') {
+          inside = true;
+          onPipe = false;
+         } else if (field === 'L') {
+          inside = !inside
+          onPipe = true;
+         }
+      } else if (onPipe) {
+        if (field === 'F') {
+          process.stdout.write('')
+        } else if (field === 'J') {
+          onPipe = false;
+          inside = !inside;
+        } else if (field === '7') {
+          onPipe = false;
+        } else if (field === 'L') {
+          process.stdout.write('')
+        }
+      }
+    }
+    console.log()
   }
 
-  // fuck me
-  matrix[120][110] = '|'
-  const blerg = distinctInnerAreas.filter(area => {
-    for (const [r,c] of area) {
-      const upperLoopPipes = _.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '-')
-      const upperLoopPipes2 = Array.from(_.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/-|[LJ7F]\|*[LJ7F]/g))
-      if (upperLoopPipes.length && upperLoopPipes.length % 2 === 1) {
-        return true
-      }
-
-      const lowerLoopPipes = _.range(r + 1, matrix.length).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '-')
-      const lowerLoopPipes2 = Array.from(_.range(r + 1, matrix.length).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/-|[LJ7F]\|*[LJ7F]/g))
-      if (lowerLoopPipes.length && lowerLoopPipes.length % 2 === 1) {
-        return true
-      }
-
-      const leftLoopPipes = _.range(0, c).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '|')
-      const leftLoopPipes2 = Array.from(_.range(0, c).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/\||[LJ7F]-*[LJ7F]/g))
-      if (leftLoopPipes.length && leftLoopPipes.length % 2 === 1) {
-        return true
-      }
-
-      const rightLoopPipes = _.range(c + 1, matrix.length).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p === '|')
-      const rightLoopPipes2 = Array.from(_.range(c + 1, matrix.length).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).join('').matchAll(/\||[LJ7F]-*[LJ7F]/g))
-      if (rightLoopPipes.length && rightLoopPipes.length % 2 === 1) {
-        return true
-      }
-      // return !(upperLoopPipes2.length % 2 === 0 && lowerLoopPipes2.length % 2 === 0 && leftLoopPipes2.length % 2 === 0 && rightLoopPipes2.length % 2 === 0)
-    }
-
-    return false;
-
-    // const [r,c] = area[0];
-  
-    // const blarg =_.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c])
-
-    // return Array.from(blarg.reverse().join('').matchAll(/-|[LJ]\|*[7F]/g)).length % 2 !== 0
-
-    // const upperLoopPipes = _.range(0, r).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '|')
-    // const lowerLoopPipes = _.range(r + 1, matrix.length).map(x => [x, c]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '|')
-    // const leftLoopPipes = _.range(0, c).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '-')
-    // const rightLoopPipes = _.range(c + 1, matrix.length).map(y => [r, y]).filter(n => includes(loop, n as [number, number])).map(([r,c]) => matrix[r][c]).filter(p => p !== '-');
-
-    // return upperLoopPipes.length % 2 === lowerLoopPipes.length % 2 && rightLoopPipes.length % 2 === leftLoopPipes.length % 2
-
-    // return (
-    //      upperLoopPipes.length % 2 === 1
-    //   || lowerLoopPipes.length % 2 === 1
-    //   || leftLoopPipes.length % 2 === 1
-    //   || rightLoopPipes.length % 2 === 1
-    // )
-    
-    // const groupedByRow = _.groupBy(area, ([x, y]) => x) 
-    // const groupedByCol = _.groupBy(area, ([x, y]) => y)
-
-    // const [minrr, minrc] = Object.values(groupedByRow)[0][0]
-    // const [maxrr, maxrc] = _.last(Object.values(groupedByRow))![0]
-    // const [mincr, mincc] = Object.values(groupedByCol)[0][0]
-    // const [maxcr, maxcc] = _.last(Object.values(groupedByCol))![0]
-
-    // return (
-    //      _.range(0, minrr).map(x => [x, minrc]).filter(n => includes(loop, n as [number, number]) && matrix[n[0]][n[1]] !== '|').length % 2 === 1
-    //   || _.range(maxrr + 1, matrix.length).map(x => [x, maxrc]).filter(n => includes(loop, n as [number, number]) && matrix[n[0]][n[1]] !== '|').length % 2 === 1
-    //   || _.range(0, mincc).map(y => [mincr, y]).filter(n => includes(loop, n as [number, number]) && matrix[n[0]][n[1]] !== '-').length % 2 === 1
-    //   || _.range(maxcc + 1, matrix.length).map(y => [maxcr, y]).filter(n => includes(loop, n as [number, number]) && matrix[n[0]][n[1]] !== '-').length % 2 === 1
-    // )
-
-    // return !(
-    //   includes(loop!, [minrr - 1, minrc]) && includes(loop!, [minrr - 2, minrc]) &&
-    //   includes(loop!, [maxrr + 1, maxrc]) && includes(loop!, [maxrr + 2, maxrc]) &&
-    //   includes(loop!, [mincr, mincc - 1]) && includes(loop!, [mincr, mincc - 2]) &&
-    //   includes(loop!, [maxcr, maxcc + 1]) && includes(loop!, [maxcr, maxcc + 2])
-    // )
-
-    // const outerNeighbors = distinct(area.flatMap(n => getNeighbors(n, matrix))).filter(n => !includes(area, n))
-    // const newInner = [...area, ...outerNeighbors]
-    // const outerNeighbors2 = distinct(newInner.flatMap(n => getNeighbors(n, matrix))).filter(n => !includes(newInner, n))
-    // return !(outerNeighbors2.every(n => includes(loop, n)) && outerNeighbors.every(n => includes(loop, n)))
-  })
-  console.log(blerg.flatMap(a=>a).length)
+  console.log(insideFields)
 }
 
 // part1()
