@@ -71,19 +71,19 @@ async function part1() {
 
 async function part2() {
   const input = await readInputFile(11);
-  // const lines = input.split("\n");
-  const lines = [
-    '...#......',
-    '.......#..',
-    '#.........',
-    '..........',
-    '......#...',
-    '.#........',
-    '.........#',
-    '..........',
-    '.......#..',
-    '#...#.....',
-  ]
+  const lines = input.split("\n");
+  // const lines = [
+  //   '...#......',
+  //   '.......#..',
+  //   '#.........',
+  //   '..........',
+  //   '......#...',
+  //   '.#........',
+  //   '.........#',
+  //   '..........',
+  //   '.......#..',
+  //   '#...#.....',
+  // ]
   let matrix = lines.map(line => line.split(""));
   const emptyRows = matrix.reduce((lines, line, index) => line.every(c => c === '.') ? [...lines, index] : lines, [])
   matrix = transpose(matrix);
@@ -110,9 +110,9 @@ async function part2() {
   const debug = [];
   let sumOfDistances = 0;
   for (const [[r1, c1], [r2, c2]] of galaxyPairs) {
-    let distance = Math.abs(r1 - r2) + Math.abs(c1 - c2);
     const [rmin, rmax] = [r1, r2].sort()
     const [cmin, cmax] = [c1, c2].sort()
+    let distance = Math.abs(rmax - rmin) + Math.abs(cmax - cmin);
     const traversedEmptyRows = _.intersection(emptyRows, _.range(rmin, rmax + 1));
     const traversedEmptyCols = _.intersection(emptyCols, _.range(cmin, cmax + 1));
     // distance += _.intersection(emptyRows, _.range(rmin, rmax + 1)).length * (1000000 - 1)
