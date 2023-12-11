@@ -1,8 +1,6 @@
 import { writeFile } from "fs/promises";
 import { readInputFile } from "./util"
 import _ from "lodash";
-import exp from "constants";
-import { sum } from "lodash";
 
 function transpose(matrix): string[][] {
   return _.zip(...matrix) as string[][];
@@ -85,7 +83,7 @@ async function part2() {
   //   '#...#.....',
   // ]
   let matrix = lines.map(line => line.split(""));
-  const emptyRows = matrix.reduce((lines, line, index) => line.every(c => c === '.') ? [...lines, index] : lines, [])
+  const emptyRows = matrix.reduce((lines: number[], line: string[], index: number) => line.every(c => c === '.') ? [...lines, index] : lines, [])
   matrix = transpose(matrix);
   await writeFile('matrix.txt', matrix.map(line => line.join("")).join("\n"))
   const emptyCols =  matrix.reduce((lines, line, index) => line.every(c => c === '.') ? [...lines, index] : lines, [])
@@ -107,20 +105,15 @@ async function part2() {
     }
   }
 
-  const debug = [];
   let sumOfDistances = 0;
   for (const [[r1, c1], [r2, c2]] of galaxyPairs) {
-    const [rmin, rmax] = [r1, r2].sort()
-    const [cmin, cmax] = [c1, c2].sort()
+    const [rmin, rmax] = [...[r1, r2]].sort()
+    const [cmin, cmax] = [...[c1, c2]].sort()
     let distance = Math.abs(rmax - rmin) + Math.abs(cmax - cmin);
-    const traversedEmptyRows = _.intersection(emptyRows, _.range(rmin, rmax + 1));
-    const traversedEmptyCols = _.intersection(emptyCols, _.range(cmin, cmax + 1));
-    // distance += _.intersection(emptyRows, _.range(rmin, rmax + 1)).length * (1000000 - 1)
-    // distance += _.intersection(emptyCols, _.range(cmin, cmax + 1)).length * (1000000 - 1)
-    distance += traversedEmptyRows.length * (2 - 1)
-    distance += traversedEmptyCols.length * (2 - 1)
-    sumOfDistances += distance;
-    debug.push({ distance, traversedEmptyRows, traversedEmptyCols, r1, c1, r2, c2 })
+    const traversedEmptyRows = _.intersection(emptyRows, _.range(rmin, rmax));
+    const traversedEmptyCols = _.intersection(emptyCols, _.range(cmin, cmax));
+
+    sumOfDistances += distance + (traversedEmptyCols.length + traversedEmptyRows.length) * (1000000 - 1);
   }
 
   console.log(sumOfDistances)
