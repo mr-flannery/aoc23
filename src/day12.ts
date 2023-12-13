@@ -3,11 +3,12 @@ import { readInputFile } from "./util"
 import _ from "lodash";
 
 
-function magicCalc(str, nums) {
-  if (str.join('').length < _.sum(nums)) {
-    return 0
-  } 
-  return 1
+function magicCalc(rw, gw) {
+  if (rw.length === 1 && gw.length === 1) {
+    if (rw[0].split('').filter(c => c === '#').length === gw[0]) {
+      return 1
+    }
+  }
 }
 
 async function part1() {
@@ -23,6 +24,7 @@ async function part1() {
   // maybe I need to adaptive sliding windows
   for (let { row, groups } of records) {
     const rowGroups = row.split('.').filter(x=>x);
+    console.log(rowGroups.map(g => g.length), groups)
     const possibilityFactors = [];
 
     let r0 = 0;
@@ -32,54 +34,27 @@ async function part1() {
     let g1 = 1;
     let gmax = groups.length;
 
-    while (r0 < rowGroups.length && g0 < groups.length) {
-      let rw = rowGroups.slice(r0, r1);
-      let gw = groups.slice(g0, g1);
-      if (_.last(rw).includes('#')) {
-        if (_.last(rw).length > _.sum(gw) + gw.length - 1) { // this makes no sense for e.g. ###? and 3 being the last elements
-          if (g1 === gmax) {
-            possibilityFactors.push(magicCalc(rw, groups.slice(g0, g1)));
-            g0 = g1;
-          
-          }
-          g1++
-        } else if (rmax - r1 < gmax - g1) {
-          g1++
-        } else {
-          let factor = magicCalc(rw, groups.slice(g0, g1))
-          if (factor === 0) {
-            factor = magicCalc(rw, groups.slice(g0, g1-1))
-            if (factor === 0) {
-              console.log('error')
-            } else {
-              possibilityFactors.push(factor);
-              g0 = g1;
-              g1++
-              r0 = r1;
-              r1++
-            }
-          }
-          possibilityFactors.push(factor);
-          // TODO: this might be wrong, maybe I just need to move r0 and g0 by 1
-          g0 = g1;
-          g1++
-          r0 = r1;
-          r1++
-        }
-      } else {
-        if (rmax - r1 < gmax - g1) {
-          g1++
-        } else if (gmax - g1 < rmax - r1) {
-          r1++
-        } else {
-          possibilityFactors.push(magicCalc(rw, groups.slice(g0, g1)));
-          g0 = g1;
-          g1++
-          r0 = r1;
-          r1++
-        }
-      }
-    }
+
+    // TODO: Can I remove groups without # until it doesn't work?
+    // while (r0 < rowGroups.length && g0 < groups.length) {
+    //   let rw = rowGroups.slice(r0, r1);
+    //   let gw = groups.slice(g0, g1);
+    //   if (_.last(rw).includes('#')) {
+    //     if (gw.length === 1 && rw.length === 1 && _.last(rw).length === gw[0]) {
+    //       // perfect match, do nothing
+    //       r0++; r1++; g0++; g1++;
+    //     } else {
+    //       const result = magicCalc(rw, gw);
+    //       r0++; r1++; g0++; g1++;
+    //     }
+    //   } else {
+    //     if (gw.length === 1 && rw.length === 1 && _.last(rw).length === gw[0]) {
+    //       // would fit. +1
+    //       // we only increase r, since the next r could still fit the same g, in theory
+    //       r0++; r1++; 
+    //     }
+    //   }
+    // }
 
     console.log()
   }  

@@ -7,3 +7,9 @@ export async function readInputFile(day: number): Promise<string> {
   const input = await readFile(inputPath, 'utf8');
   return input;
 }
+
+export async function readSampleInputFile(day: number): Promise<string> {
+  const inputPath = join(__dirname, `../../input/${day}.sample.txt`);
+  const input = await readFile(inputPath, 'utf8');
+  return input;
+}
