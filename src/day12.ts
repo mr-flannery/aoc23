@@ -1,70 +1,176 @@
-import { writeFile } from "fs/promises";
+ import { writeFile } from "fs/promises";
 import { readInputFile } from "./util"
 import _ from "lodash";
 
-
-function magicCalc(rw, gw) {
-  if (rw.length === 1 && gw.length === 1) {
-    if (rw[0].split('').filter(c => c === '#').length === gw[0]) {
-      return 1
-    }
-  }
-}
 
 async function part1() {
   const input = await readInputFile(12);
   const lines = input.split("\n");
 
+  // const lines = [
+  //   "??????##?.? 2,5,1"
+  // ]
+
   const records = lines.map(line => {
-    const [row, nums] = line.split(" ");
+    const [str, nums] = line.split(" ");
     const groups = nums.split(',').map(num => parseInt(num))
-    return { row, groups }
+    return { str, groups }
   })
 
-  // maybe I need to adaptive sliding windows
-  for (let { row, groups } of records) {
-    const rowGroups = row.split('.').filter(x=>x);
-    console.log(rowGroups.map(g => g.length), groups)
-    const possibilityFactors = [];
+  let result = 0;
 
-    let r0 = 0;
-    let r1 = 1;
-    let rmax = rowGroups.length;
-    let g0 = 0;
-    let g1 = 1;
-    let gmax = groups.length;
+  for (const {str, groups} of records) {
+    const workingStates = []
+    const nextState = [{group: 0, index: 0, amount: 0, path: "" }]
+    while (nextState.length) {
+      let { group, index, amount, path } = nextState.pop();
+
+      // we used all groups before exhausting the string
+      if (group === groups.length) {
+        if (!str.substring(index).includes('#')) {
+          workingStates.push(path)
+        } 
+        continue;
+      }
+
+      // we exhausted the string
+      if (index === str.length) {
+        if (path.split('').filter(char => char === '#').length === _.sum(groups)) {
+          workingStates.push(path)
+        }
+        continue;
+      }
 
 
-    // TODO: Can I remove groups without # until it doesn't work?
-    // while (r0 < rowGroups.length && g0 < groups.length) {
-    //   let rw = rowGroups.slice(r0, r1);
-    //   let gw = groups.slice(g0, g1);
-    //   if (_.last(rw).includes('#')) {
-    //     if (gw.length === 1 && rw.length === 1 && _.last(rw).length === gw[0]) {
-    //       // perfect match, do nothing
-    //       r0++; r1++; g0++; g1++;
-    //     } else {
-    //       const result = magicCalc(rw, gw);
-    //       r0++; r1++; g0++; g1++;
-    //     }
-    //   } else {
-    //     if (gw.length === 1 && rw.length === 1 && _.last(rw).length === gw[0]) {
-    //       // would fit. +1
-    //       // we only increase r, since the next r could still fit the same g, in theory
-    //       r0++; r1++; 
-    //     }
-    //   }
-    // }
+      if (str.charAt(index) === '.' && amount > 0 && amount < groups[group]) {
+        continue;
+      }
 
-    console.log()
-  }  
+      if (amount === groups[group]) {
+        if (str.charAt(index) === '#') {
+          continue;
+        } else if (str.charAt(index) === '?') {
+          nextState.push({ group: group+1, index: index + 1, amount: 0, path: path + '.' })
+          continue;
+        } else {
+          group++;
+          amount = 0;
+        }
+      }
 
-  console.log()
+      if (str.charAt(index) === '.') {
+        nextState.push({ group, index: index + 1, amount, path: path + '.' })
+      } else if (str.charAt(index) === '#') {
+        nextState.push({ group, index: index + 1, amount: amount + 1, path: path + '#' })
+      } else {
+        // don't use a dot if it can only cause a failstate
+        if (!(amount !== 0 && amount < groups[group])) {
+          nextState.push({ group, index: index + 1, amount, path: path + '.' })
+        }
+        nextState.push({ group, index: index + 1, amount: amount + 1, path: path + '#' })
+      }
+    }
+    // console.log(workingStates.length)
+    result += workingStates.length;
+  }
+
+  console.log(result)
 }
 
 async function part2() {
+  const input = await readInputFile(12);
+  const lines = input.split("\n");
 
+  // const lines = [
+  //   "??????##?.? 2,5,1"
+  // ]
+
+  const records = lines.map(line => {
+    let [str, nums] = line.split(" ");
+    // str = [str, str, str, str, str].join('?')
+    // nums = [nums, nums, nums, nums, nums].join(',')
+    const groups = nums.split(',').map(num => parseInt(num))
+    return { str, groups }
+  })
+
+  let result = 0;
+
+  
+  for (const {str, groups} of records) {
+    const cache = new Map()
+    const workingStates = []
+    const nextState = [{group: 0, index: 0, amount: 0, path: "" }]
+    while (nextState.length) {
+      let { group, index, amount, path } = nextState.shift();
+
+      // we used all groups before exhausting the string
+      // if (group === groups.length) {
+      //   if (!str.substring(index).includes('#')) {
+      //     workingStates.push(path)
+      //   } 
+      //   continue;
+      // }
+
+      // we exhausted the string
+      if (index === str.length) {
+        if (path.split('').filter(char => char === '#').length === _.sum(groups)) {
+          workingStates.push(path)
+        }
+        continue;
+      }
+
+
+      if (str.charAt(index) === '.' && amount > 0 && amount < groups[group]) {
+        continue;
+      }
+
+      if (amount === groups[group]) {
+        if (str.charAt(index) === '#') {
+          continue;
+        } else if (str.charAt(index) === '?') {
+          group++;
+          index++;
+          amount = 0;
+          if (cache.has(`${group}-${index}`)) {
+            cache.set(`${group}-${index}`, cache.get(`${group}-${index}`) + 1)
+          } else {
+            cache.set(`${group}-${index}`, 1)
+            nextState.push({ group, index, amount, path: path + '.' })
+          }
+          continue;
+        } else {
+          group++;
+          amount = 0;
+
+          if (cache.has(`${group}-${index}`)) {
+            cache.set(`${group}-${index}`, cache.get(`${group}-${index}`) + 1)
+            continue
+          } else {
+            cache.set(`${group}-${index}`, 1)
+          }
+        }
+      }
+
+      if (str.charAt(index) === '.') {
+        nextState.push({ group, index: index + 1, amount, path: path + '.' })
+      } else if (str.charAt(index) === '#') {
+        nextState.push({ group, index: index + 1, amount: amount + 1, path: path + '#' })
+      } else {
+        // don't use a dot if it can only cause a failstate
+        if (!(amount !== 0 && amount < groups[group])) {
+          nextState.push({ group, index: index + 1, amount, path: path + '.' })
+        }
+        if (group !== groups.length) {
+          nextState.push({ group, index: index + 1, amount: amount + 1, path: path + '#' })
+        }
+      }
+    }
+    console.log(workingStates.length)
+    result += workingStates.length;
+  }
+
+  console.log(result)
 }
 
-part1()
-// part2()
+// part1()
+part2()
