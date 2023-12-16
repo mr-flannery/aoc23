@@ -95,7 +95,7 @@ async function part2() {
 
   let result = 0;
 
-  
+  // TODO: scrap this and try recursive with memoization
   for (const {str, groups} of records) {
     const cache = new Map()
     const workingStates = []
@@ -113,9 +113,9 @@ async function part2() {
 
       // we exhausted the string
       if (index === str.length) {
-        if (path.split('').filter(char => char === '#').length === _.sum(groups)) {
-          workingStates.push(path)
-        }
+        // if (path.split('').filter(char => char === '#').length === _.sum(groups)) {
+        //   workingStates.push(path)
+        // }
         continue;
       }
 
@@ -165,8 +165,8 @@ async function part2() {
         }
       }
     }
-    console.log(workingStates.length)
-    result += workingStates.length;
+    console.log(Math.max(...cache.values()))
+    result += Math.max(...cache.values());
   }
 
   console.log(result)
